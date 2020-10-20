@@ -1,2 +1,2 @@
  # 安装
-    composer require redunicorn/document
+    composer require phpzlc/document-bundle
