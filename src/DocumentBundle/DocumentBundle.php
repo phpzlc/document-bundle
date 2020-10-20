@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPZlc\Document\Entrance\DocumentBundle;
+namespace PHPZlc\Document\DocumentBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

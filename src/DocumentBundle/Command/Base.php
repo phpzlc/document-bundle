@@ -5,7 +5,7 @@
  * Date: 2018/4/20
  */
 
-namespace PHPZlc\Document\Entrance\DocumentBundle\Command;
+namespace PHPZlc\Document\DocumentBundle\Command;
 
 
 use Symfony\Component\Console\Command\Command;
@@ -20,15 +20,15 @@ abstract class Base extends Command
      */
     protected $io;
 
-    protected $command_pre = 'unicorn:';
+    protected $command_pre = 'phpzlc:';
 
-    protected $description_pre = '[Unicorn] ';
+    protected $description_pre = '[phpzlc] ';
 
     protected $document_config = 'document.config.php';
 
     protected function getRootPath()
     {
-        return  dirname(dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__))))))));
+        return  dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
     }
 
     protected function interact(InputInterface $input, OutputInterface $output)

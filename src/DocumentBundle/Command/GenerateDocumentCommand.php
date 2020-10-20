@@ -5,10 +5,13 @@
  * Date: 2018/5/2
  */
 
-namespace PHPZlc\Document\Entrance\DocumentBundle\Command;
+namespace PHPZlc\Document\DocumentBundle\Command;
 
 
+use App\Document\Config;
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\DBAL\Connection;
+use MongoDB\Driver\Command;
 use PHPZlc\Document\Document;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -16,6 +19,17 @@ use Symfony\Component\Routing\Matcher\RedirectableUrlMatcher;
 
 class GenerateDocumentCommand extends Base
 {
+    /**
+     * @var Connection|null
+     */
+    private $connection;
+
+    public function __construct(Connection $connection = null)
+    {
+        parent::__construct();
+        $this->connection = $connection;
+    }
+
     private $vars = array(
         '$' => '$'
     );
@@ -32,46 +46,7 @@ class GenerateDocumentCommand extends Base
     {
         $this
             ->setName($this->command_pre . 'generate:document')
-            ->setDescription($this->description_pre . '生成API文档')
-            ->setHelp(<<<EOF
-<info>%command.name%</info> 生成API文档
-        <comment>[注意]在生成文档之前需先运行生成API配置文件：</comment>
-                <info>{$this->command_pre}generate:document:config</info>
-        <comment>API写在哪？</comment>
-                <info>1:建立src/*Bundle/Document目录</info>
-                <info>2:在建立好的目录中建立*Document.php类文件</info>
-                <info>3:在类文件的中建立名为*Action的方法，在其之上书写注释</info>
-        <comment>目录结构示例</comment>
-                <info>src
-                ----BaseBundle
-                --------Document
-                ------------IndexDocument.php</info>
-        <comment>代码示例</comment>
-                <info>
-                <?php
-                namespace BaseBundle\Document;
-                
-                use PHPZlc\Document\Document;
-                
-                class IndexDocument extends Document
-                {
-                    /**
-                     * @throws \Exception
-                     */
-                    function indexAction()
-                    {
-                        {$this->vars['$']}this->add()
-                            ->setTitle('测试')
-                            ->setUrl('www.***.com/api/beta')
-                            ->setMethod('post')
-                            ->generate();
-                    }
-                }   
-                   
-                ?>         
-                </info>
-EOF
-            );
+            ->setDescription($this->description_pre . '生成API文档');
         ;
     }
 
@@ -83,9 +58,10 @@ EOF
         $this->globalConfig();
 
         //TODO 接口数据
-        foreach ($this->getDocumentClassArray($this->getRootPath() . '/src/') as $document) {
+        foreach ($this->getDocumentClassArray($this->getRootPath() . '/src/Document') as $document) {
             $this->reader($document);
         }
+        
         $this->actionsArrange();
 
         //TODO 代码生成
@@ -93,7 +69,7 @@ EOF
         //>1 目录资源重置
         exec('rm -rf ' . $this->rootApiDir());
         mkdir($this->rootApiDir());
-        exec('cp -rf ' . __DIR__ . '/../../../Resources/Default/ApiDoc/* ' . $this->rootApiDir() . '/');
+        exec('cp -rf ' . __DIR__ . '/../Resources/Default/ApiDoc/* ' . $this->rootApiDir() . '/');
 
         //>2 生成静态页面
         $this->generateIndexFile();
@@ -107,34 +83,39 @@ EOF
         exec('cd ' . $this->rootApiDir() .'; zip -r ' . $this->rootApiDir() . '/' . $this->jsonToArray($this->global)['title'] . 'API文档.zip  .');
 
         $this->io->success('生成成功');
-        return;
+
+        return \Symfony\Component\Console\Command\Command::SUCCESS;
     }
 
     private function globalConfig()
     {
-        $globalConfigPath = $this->getRootPath() . '/app/config/' . $this->document_config;
+        $global['title'] = Config::$title;
+        $global['publishing'] = Config::$publishing;
+        $global['domain'] = isset($_ENV['DOC_HOST']) ? $_ENV['DOC_HOST'] : '';
+        $global['explain'] = Config::$explain;
+        $global['note'] = Config::$note;
+        $global['appendix'] = Config::$appendix;
 
-        if(!is_file($globalConfigPath)){
-            $this->io->error('配置文件不存在 请用--help得到帮助');
-            exit;
+        foreach ($global as $key => $value){
+            if(empty($value)){
+                $global[$key] = '';
+            }
         }
 
-        include_once $globalConfigPath;
+        $database_url = isset($_ENV['DATABASE_URL']) ? $_ENV['DATABASE_URL'] : '';
 
-        $global['title'] = isset($title) ? $title : '';
-        $global['publishing'] = isset($publishing) ? $publishing : '';
-        $global['domain'] = isset($domain) ? $domain : '';
-        $global['explain'] = isset($explain) ? $explain : '';
-        $global['note'] = isset($note) ? $note : '';
-        $global['appendix'] = isset($appendix) ? $appendix : '';
-
-        $this->config['database_host'] = isset($database_host) ? $database_host : '';
-        $this->config['database_name'] = isset($database_name) ? $database_name : '';
-        $this->config['database_user_name'] = isset($database_user_name) ? $database_user_name : '';
-        $this->config['database_password'] = isset($database_password) ? $database_password : '';
+        $this->config['database_host'] = $this->connection->getHost();
+        $this->config['database_name'] = $this->connection->getDatabase();
+        $this->config['database_user_name'] = $this->connection->getUsername();
+        $this->config['database_password'] = $this->connection->getPassword();
 
         if(empty($global['title'])) {
             $this->io->error('文档标题不能为空');
+            exit;
+        }
+
+        if(empty($global['domain'])) {
+            $this->io->error('根地址不能为空');
             exit;
         }
 
@@ -144,7 +125,7 @@ EOF
 
     private function rootApiDir()
     {
-        return $this->getRootPath() . '/web/apidoc';
+        return $this->getRootPath() . '/public/apidoc';
     }
 
     /**
@@ -159,14 +140,11 @@ EOF
         $return_array = [];
         if(!empty($arr)) {
             foreach ($arr as $value) {
-                if(strpos($value, 'Bundle') !== false){
-                    $return_array = array_merge($return_array , $this->getDocumentClassArray($dir_name . '/' . $value));
-                }
-                if(strpos($value, 'Document') !== false ){
-                    if(is_dir($dir_name . '/' . $value)){
-                        $return_array = array_merge($return_array , $this->getDocumentClassArray($dir_name . '/' . $value));
-                    } else {
-                        $return_array[] = str_replace('/' ,'\\' , str_replace($this->getRootPath() . '/src/', '', $dir_name .'/'. rtrim($value, '.php')));
+                if(is_file($dir_name . '/' . $value) && strpos($value, 'Document') !== false){
+                    $return_array[] = str_replace('/' ,'\\' , str_replace($this->getRootPath() . '/src/', '', 'App/'. $dir_name .'/'. rtrim($value, '.php')));
+                }elseif(is_dir($dir_name . '/' . $value)){
+                    if(!in_array($value, ['.', '..'])) {
+                        $return_array = array_merge($return_array, $this->getDocumentClassArray($dir_name . '/' . $value));
                     }
                 }
             }
@@ -189,7 +167,7 @@ EOF
 
         if($class instanceof Document){
             foreach ($reflClass->getMethods() as $action){
-                if(strpos($action->getName(), 'Action') !== false && strpos($action->__toString(), str_replace('\\', '/', $document)) !== false){
+                if(strpos($action->getName(), 'Action') !== false && strpos($action->__toString(), str_replace('App/', '', str_replace('\\', '/', $document))) !== false){
                     $method = $action->getName();
                     $class->$method();
                 }
