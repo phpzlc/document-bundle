@@ -1,0 +1,26 @@
+{
+    "name": "phpzlc/document-bundle",
+    "description": "文档生成组件",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "phpzlc", "document", "symfony"
+    ],
+    "homepage": "",
+    "authors": [
+        {
+            "name": "jay_he",
+            "email": "hjjhanxing@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "PHPZlc\\Document\\": ["src"]
+        }
+    },
+    "require": {
+        "php": "^7.2.5"
+    }
+}
+
