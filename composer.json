@@ -5,7 +5,7 @@
     "license": "MIT",
     "type": "library",
     "keywords": [
-        "phpzlc", "symfony"
+        "phpzlc", "symfony", "document", "api-document"
     ],
     "support": {
         "email": "1044295598@qq.com"
