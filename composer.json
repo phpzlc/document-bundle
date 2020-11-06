@@ -22,7 +22,7 @@
         }
     },
     "require": {
-        "symfony/framework-bundle": "4.4.*"
+        "symfony/framework-bundle": ">=4.4"
     }
 }
 
