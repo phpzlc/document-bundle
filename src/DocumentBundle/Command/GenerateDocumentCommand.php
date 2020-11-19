@@ -84,7 +84,7 @@ class GenerateDocumentCommand extends Base
 
         $this->io->success('生成成功');
 
-        return \Symfony\Component\Console\Command\Command::SUCCESS;
+        return 0;
     }
 
     private function globalConfig()
