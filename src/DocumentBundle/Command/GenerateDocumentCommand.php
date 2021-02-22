@@ -89,20 +89,18 @@ class GenerateDocumentCommand extends Base
 
     private function globalConfig()
     {
-        $global['title'] = Config::$title;
-        $global['publishing'] = Config::$publishing;
-        $global['domain'] = isset($_ENV['DOC_HOST']) ? $_ENV['DOC_HOST'] : '';
-        $global['explain'] = Config::$explain;
-        $global['note'] = Config::$note;
-        $global['appendix'] = Config::$appendix;
+        $global['title'] = Config::getTitle();
+        $global['publishing'] = Config::getPublishing();
+        $global['domain'] = Config::getHost();
+        $global['explain'] = Config::getExplain();
+        $global['note'] = Config::getNote();
+        $global['appendix'] = Config::getAppendix();
 
         foreach ($global as $key => $value){
             if(empty($value)){
                 $global[$key] = '';
             }
         }
-
-        $database_url = isset($_ENV['DATABASE_URL']) ? $_ENV['DATABASE_URL'] : '';
 
         $this->config['database_host'] = $this->connection->getHost();
         $this->config['database_name'] = $this->connection->getDatabase();
