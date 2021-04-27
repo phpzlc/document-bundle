@@ -1,6 +1,6 @@
 {
     "name": "phpzlc/document-bundle",
-    "description": "API文档生成组件",
+    "description": "文档组件，用于编写接口文档,通过命令生成,在线的,可测试,可交付的技术文档。",
     "homepage": "https://phpzlc.github.io/",
     "license": "MIT",
     "type": "library",
