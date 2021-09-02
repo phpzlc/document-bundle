@@ -4,18 +4,17 @@
  * User: Jay
  * Date: 2018/5/2
  */
-
 namespace PHPZlc\Document\DocumentBundle\Command;
-
 
 use App\Document\Config;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\DBAL\Connection;
-use MongoDB\Driver\Command;
 use PHPZlc\Document\Document;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Routing\Matcher\RedirectableUrlMatcher;
+use ZanySoft\Zip\Zip;
 
 class GenerateDocumentCommand extends Base
 {
@@ -24,10 +23,16 @@ class GenerateDocumentCommand extends Base
      */
     private $connection;
 
+    /**
+     * @var Filesystem;
+     */
+    private $fileSystem;
+
     public function __construct(Connection $connection = null)
     {
         parent::__construct();
         $this->connection = $connection;
+        $this->fileSystem = new Filesystem();
     }
 
     private $vars = array(
@@ -58,18 +63,18 @@ class GenerateDocumentCommand extends Base
         $this->globalConfig();
 
         //TODO 接口数据
-        foreach ($this->getDocumentClassArray($this->getRootPath() . '/src/Document') as $document) {
+        foreach ($this->getDocumentClassArray($this->getRootPath() . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR .'Document') as $document) {
             $this->reader($document);
         }
-        
+
         $this->actionsArrange();
 
         //TODO 代码生成
 
         //>1 目录资源重置
-        exec('rm -rf ' . $this->rootApiDir());
-        mkdir($this->rootApiDir());
-        exec('cp -rf ' . __DIR__ . '/../Resources/Default/ApiDoc/* ' . $this->rootApiDir() . '/');
+        $this->fileSystem->remove($this->rootApiDir());
+        $this->fileSystem->mkdir($this->rootApiDir());
+        $this->fileSystem->mirror(dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Resources' . DIRECTORY_SEPARATOR . 'Default' . DIRECTORY_SEPARATOR . 'ApiDoc', $this->rootApiDir() . DIRECTORY_SEPARATOR);
 
         //>2 生成静态页面
         $this->generateIndexFile();
@@ -80,7 +85,8 @@ class GenerateDocumentCommand extends Base
         $this->generateDebugFile();
 
         //>3 生成打包件
-        exec('cd ' . $this->rootApiDir() .'; zip -r ' . $this->rootApiDir() . '/' . $this->jsonToArray($this->global)['title'] . 'API文档.zip  .');
+        $zip = Zip::create($this->rootApiDir() . DIRECTORY_SEPARATOR .  $this->jsonToArray($this->global)['title'] . 'API文档.zip');
+        $zip->add($this->rootApiDir());
 
         $this->io->success('生成成功');
 
@@ -123,7 +129,7 @@ class GenerateDocumentCommand extends Base
 
     private function rootApiDir()
     {
-        return $this->getRootPath() . '/public/apidoc';
+        return $this->getRootPath() . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'apidoc';
     }
 
     /**
@@ -138,11 +144,11 @@ class GenerateDocumentCommand extends Base
         $return_array = [];
         if(!empty($arr)) {
             foreach ($arr as $value) {
-                if(is_file($dir_name . '/' . $value) && strpos($value, 'Document') !== false){
-                    $return_array[] = str_replace('/' ,'\\' , str_replace($this->getRootPath() . '/src/', '', 'App/'. $dir_name .'/'. rtrim($value, '.php')));
-                }elseif(is_dir($dir_name . '/' . $value)){
+                if(is_file($dir_name . DIRECTORY_SEPARATOR . $value) && strpos($value, 'Document') !== false){
+                    $return_array[] = str_replace(DIRECTORY_SEPARATOR ,'\\' , str_replace($this->getRootPath() . DIRECTORY_SEPARATOR . 'src' .DIRECTORY_SEPARATOR, '', 'App' . DIRECTORY_SEPARATOR . $dir_name . DIRECTORY_SEPARATOR . rtrim($value, '.php')));
+                }elseif(is_dir($dir_name . DIRECTORY_SEPARATOR . $value)){
                     if(!in_array($value, ['.', '..'])) {
-                        $return_array = array_merge($return_array, $this->getDocumentClassArray($dir_name . '/' . $value));
+                        $return_array = array_merge($return_array, $this->getDocumentClassArray($dir_name . DIRECTORY_SEPARATOR . $value));
                     }
                 }
             }
@@ -164,8 +170,8 @@ class GenerateDocumentCommand extends Base
         $class = new $document();
 
         if($class instanceof Document){
-            foreach ($reflClass->getMethods() as $action){
-                if(strpos($action->getName(), 'Action') !== false && strpos($action->__toString(), str_replace('App/', '', str_replace('\\', '/', $document))) !== false){
+            foreach ($reflClass->getMethods() as $action) {
+                if(strpos($action->getName(), 'Action') !== false && strpos($action->__toString(), str_replace('App' . DIRECTORY_SEPARATOR, '', str_replace('\\',  DIRECTORY_SEPARATOR, $document))) !== false){
                     $method = $action->getName();
                     $class->$method();
                 }
