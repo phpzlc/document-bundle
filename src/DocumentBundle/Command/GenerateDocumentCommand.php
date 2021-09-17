@@ -85,8 +85,10 @@ class GenerateDocumentCommand extends Base
         $this->generateDebugFile();
 
         //>3 生成打包件
-        $zip = Zip::create($this->rootApiDir() . DIRECTORY_SEPARATOR .  $this->jsonToArray($this->global)['title'] . 'API文档.zip');
-        $zip->add($this->rootApiDir());
+        if(class_exists(\ZipArchive::class)) {
+            $zip = Zip::create($this->rootApiDir() . DIRECTORY_SEPARATOR . $this->jsonToArray($this->global)['title'] . 'API文档.zip');
+            $zip->add($this->rootApiDir());
+        }
 
         $this->io->success('生成成功');
 
@@ -313,9 +315,11 @@ EOF;
 
         switch ($type){
             case 1:
-                $html .= <<<EOF
+                if(class_exists(\ZipArchive::class)) {
+                    $html .= <<<EOF
                  <li><a href="{$this->jsonToArray($this->global)['title']}API文档.zip">打包ZIP</a></li>
 EOF;
+                }
                 break;
             case 3:
                 $html .= <<<EOF
