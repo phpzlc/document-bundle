@@ -110,10 +110,11 @@ class GenerateDocumentCommand extends Base
             }
         }
 
-        $this->config['database_host'] = $this->connection->getHost();
-        $this->config['database_name'] = $this->connection->getDatabase();
-        $this->config['database_user_name'] = $this->connection->getUsername();
-        $this->config['database_password'] = $this->connection->getPassword();
+        $this->config['database_host'] = $this->connection->getParams()['host'];
+        $this->config['database_port'] = $this->connection->getParams()['port'];
+        $this->config['database_name'] = $this->connection->getParams()['dbname'];
+        $this->config['database_user_name'] = $this->connection->getParams()['user'];
+        $this->config['database_password'] = $this->connection->getParams()['password'];
 
         if(empty($global['title'])) {
             $this->io->error('文档标题不能为空');
@@ -977,9 +978,10 @@ EOF;
             //配置数据库
             $database = $config['database_name'];
             $dbserver = $config['database_host'];
+            $dpord = $config['database_port'];
             $dbusername = $config['database_user_name'];
             $dbpassword = $config['database_password'];
-            $mysql_conn = mysqli_connect("$dbserver", "$dbusername", "$dbpassword");
+            $mysql_conn = mysqli_connect("$dbserver", "$dbusername", "$dbpassword", null, $dpord);
             if (!$mysql_conn) {
                 $data_html .= '<div class="not-found">数据库连接失败</div>';
             } else {
