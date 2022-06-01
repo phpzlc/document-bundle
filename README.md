@@ -5,4 +5,4 @@
  
  ## 文档支持
  
- [技术文档](https://phpzlc.com/doc/document-bundle)
+ [技术文档](https://phpzlc.com/doc/zh-CN/document-bundle/v2.0/document-bundle)
