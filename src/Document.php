@@ -10,6 +10,7 @@ class Document
 
     private static $item = 0;
 
+
     public function add()
     {
         $debug_backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
@@ -80,6 +81,10 @@ class Document
 
         if(!array_key_exists('return', $this->getLocalDocument())){
             $this->setReturn('');
+        }
+
+        if(!array_key_exists('updateAt', $this->getLocalDocument())){
+            $this->setUpdateAt(null);
         }
 
         if(!array_key_exists('param', $this->getLocalDocument())){
@@ -223,6 +228,14 @@ class Document
     public function setReturn($return)
     {
         return $this->set('return', $return);
+    }
+
+    /**
+     * 设置更新时间
+     */
+    public function setUpdateAt(?\DateTimeInterface $dateTime)
+    {
+        return $this->set('updateAt', $dateTime);
     }
 
     /**
