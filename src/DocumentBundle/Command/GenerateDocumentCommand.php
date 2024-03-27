@@ -55,7 +55,7 @@ class GenerateDocumentCommand extends Base
         ;
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output):int
     {
         $this->io->title($this->getName());
 
@@ -84,11 +84,11 @@ class GenerateDocumentCommand extends Base
         $this->generateDataFile();
         $this->generateDebugFile();
 
-        //>3 生成打包件
-        if(class_exists(\ZipArchive::class)) {
-            $zip = Zip::create($this->rootApiDir() . DIRECTORY_SEPARATOR . $this->jsonToArray($this->global)['title'] . 'API文档.zip');
-            $zip->add($this->rootApiDir());
-        }
+//        //>3 生成打包件
+//        if(class_exists(\ZipArchive::class)) {
+//            $zip = Zip::create($this->rootApiDir() . DIRECTORY_SEPARATOR . $this->jsonToArray($this->global)['title'] . 'API文档.zip');
+//            $zip->add($this->rootApiDir());
+//        }
 
         $this->io->success('生成成功');
 
