@@ -22,11 +22,7 @@
         }
     },
     "require": {
-        "symfony/framework-bundle": ">=4.5",
-        "doctrine/doctrine-bundle": ">=2.5",
-        "doctrine/annotations": ">=1.0",
-        "zanysoft/laravel-zip": "^1.0",
-        "doctrine/orm": ">=2.8"
+        "symfony/framework-bundle": "7.0.*"
     }
 }
 
